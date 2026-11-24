@@ -1,0 +1,338 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Schedule Overview</h1>
+      <p class="page-subtitle">
+        Live appointment workload and quick status management backed by the local REST API.
+      </p>
+    </div>
+
+    <div class="page-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        [disabled]="isLoading()"
+        (click)="loadAppointments()"
+      >
+        Refresh
+      </button>
+      <a class="btn btn-primary" routerLink="/appointments/new">+ New Appointment</a>
+    </div>
+  </header>
+
+  @if (feedbackMessage(); as message) {
+    <div
+      class="banner"
+      [class.banner--success]="feedbackTone() === 'success'"
+      [class.banner--error]="feedbackTone() === 'error'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="banner-body">
+        <span>{{ message }}</span>
+      </div>
+      <div class="banner-actions">
+        <button type="button" class="btn btn-ghost btn-sm" (click)="dismissFeedback()">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="banner banner--error" role="alert">
+      <div class="banner-body">
+        <span class="banner-title">Unable to load dashboard data</span>
+        <span>{{ error }}</span>
+      </div>
+      <div class="banner-actions">
+        <button type="button" class="btn btn-danger btn-sm" (click)="loadAppointments()">
+          Retry
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="metric-strip panel" aria-label="Appointment summary counts">
+    <div class="metric-cell">
+      <span class="metric-label">Total</span>
+      @if (isLoading()) {
+        <span class="skeleton metric-skeleton" aria-hidden="true"></span>
+      } @else {
+        <span class="metric-value tabular">{{ totalCount() }}</span>
+      }
+    </div>
+    <div class="metric-cell">
+      <span class="metric-label">
+        <span class="status-dot status-dot--confirmed" aria-hidden="true"></span>
+        Confirmed
+      </span>
+      @if (isLoading()) {
+        <span class="skeleton metric-skeleton" aria-hidden="true"></span>
+      } @else {
+        <span class="metric-value tabular">{{ statusCounts().Confirmed }}</span>
+      }
+    </div>
+    <div class="metric-cell">
+      <span class="metric-label">
+        <span class="status-dot status-dot--pending" aria-hidden="true"></span>
+        Pending
+      </span>
+      @if (isLoading()) {
+        <span class="skeleton metric-skeleton" aria-hidden="true"></span>
+      } @else {
+        <span class="metric-value tabular">{{ statusCounts().Pending }}</span>
+      }
+    </div>
+    <div class="metric-cell">
+      <span class="metric-label">
+        <span class="status-dot status-dot--completed" aria-hidden="true"></span>
+        Completed
+      </span>
+      @if (isLoading()) {
+        <span class="skeleton metric-skeleton" aria-hidden="true"></span>
+      } @else {
+        <span class="metric-value tabular">{{ statusCounts().Completed }}</span>
+      }
+    </div>
+    <div class="metric-cell">
+      <span class="metric-label">
+        <span class="status-dot status-dot--cancelled" aria-hidden="true"></span>
+        Cancelled
+      </span>
+      @if (isLoading()) {
+        <span class="skeleton metric-skeleton" aria-hidden="true"></span>
+      } @else {
+        <span class="metric-value tabular">{{ statusCounts().Cancelled }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="panel agenda-panel">
+      <div class="panel-header">
+        <div>
+          <h2 class="panel-title">Scheduled Agenda</h2>
+          <p class="panel-meta tabular">
+            @if (selectedDate()) {
+              Showing {{ filteredAppointments().length }} appointment(s) for {{ selectedDate() }}
+            } @else {
+              Showing all {{ filteredAppointments().length }} scheduled appointment(s)
+            }
+          </p>
+        </div>
+
+        <div class="agenda-filter">
+          <label class="sr-only" for="dashboard-date-filter">Filter agenda by date</label>
+          <input
+            id="dashboard-date-filter"
+            type="date"
+            class="control date-input mono"
+            [(ngModel)]="selectedDate"
+          />
+          @if (selectedDate()) {
+            <button type="button" class="btn btn-secondary btn-sm" (click)="clearDateFilter()">
+              All Dates
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (isLoading()) {
+        <div class="agenda-list" aria-busy="true" aria-label="Loading appointments">
+          @for (row of skeletonRows; track row) {
+            <div class="agenda-row">
+              <span class="skeleton sk-time"></span>
+              <div class="sk-main">
+                <span class="skeleton sk-title"></span>
+                <span class="skeleton sk-sub"></span>
+              </div>
+              <span class="skeleton sk-status"></span>
+            </div>
+          }
+        </div>
+      } @else if (filteredAppointments().length === 0) {
+        <div class="empty-state">
+          @if (selectedDate()) {
+            <h3 class="empty-title">No appointments on {{ selectedDate() }}</h3>
+            <p class="empty-description">
+              Select another date, view all scheduled records, or create a new appointment for this
+              day.
+            </p>
+            <div class="page-actions">
+              <button type="button" class="btn btn-secondary" (click)="clearDateFilter()">
+                Show All Dates
+              </button>
+              <a class="btn btn-primary" routerLink="/appointments/new">Schedule Appointment</a>
+            </div>
+          } @else {
+            <h3 class="empty-title">No appointments scheduled yet</h3>
+            <p class="empty-description">
+              Create your first appointment to populate the schedule and test cross-field time
+              validation.
+            </p>
+            <a class="btn btn-primary" routerLink="/appointments/new">Create First Appointment</a>
+          }
+        </div>
+      } @else {
+        <div class="agenda-list">
+          @for (appointment of filteredAppointments(); track appointment.id) {
+            <article class="agenda-row">
+              <div class="agenda-time">
+                <span class="mono time-range">
+                  {{ appointment.startTime }} - {{ appointment.endTime }}
+                </span>
+                <span class="mono time-date">
+                  {{ appointment.date }}
+                  @if (getDuration(appointment); as duration) {
+                    <span class="time-duration">({{ duration }})</span>
+                  }
+                </span>
+              </div>
+
+              <div class="agenda-details">
+                <h3 class="agenda-title clamp-1">{{ appointment.title }}</h3>
+                <p class="agenda-client clamp-1">
+                  {{ appointment.clientName }}
+                  <span class="separator" aria-hidden="true">·</span>
+                  <span class="muted-email">{{ appointment.clientEmail }}</span>
+                </p>
+                @if (appointment.notes) {
+                  <p class="agenda-notes clamp-1" [title]="appointment.notes">
+                    {{ appointment.notes }}
+                  </p>
+                }
+              </div>
+
+              <div class="agenda-controls">
+                <div class="status-control-wrap">
+                  @switch (appointment.status) {
+                    @case ('Confirmed') {
+                      <span class="status-dot status-dot--confirmed" aria-hidden="true"></span>
+                    }
+                    @case ('Pending') {
+                      <span class="status-dot status-dot--pending" aria-hidden="true"></span>
+                    }
+                    @case ('Completed') {
+                      <span class="status-dot status-dot--completed" aria-hidden="true"></span>
+                    }
+                    @case ('Cancelled') {
+                      <span class="status-dot status-dot--cancelled" aria-hidden="true"></span>
+                    }
+                  }
+                  <label class="sr-only" [for]="'dash-status-' + appointment.id">
+                    Update status for {{ appointment.title }}
+                  </label>
+                  <select
+                    [id]="'dash-status-' + appointment.id"
+                    class="control status-select"
+                    [value]="appointment.status"
+                    [disabled]="updatingId() === appointment.id"
+                    (change)="onStatusChange(appointment, $event)"
+                  >
+                    @for (status of statuses; track status) {
+                      <option [value]="status">{{ status }}</option>
+                    }
+                  </select>
+                </div>
+
+                <a
+                  class="btn btn-ghost btn-sm"
+                  [routerLink]="['/appointments', appointment.id, 'edit']"
+                >
+                  Edit
+                </a>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </div>
+
+    <aside class="side-column">
+      <div class="panel side-panel">
+        <div class="panel-header side-header">
+          <h2 class="panel-title">Scheduled Dates</h2>
+          @if (selectedDate()) {
+            <button type="button" class="btn btn-ghost btn-sm" (click)="clearDateFilter()">
+              Reset
+            </button>
+          }
+        </div>
+
+        @if (dateSummaries().length === 0 && !isLoading()) {
+          <p class="side-empty">No dates on record yet.</p>
+        } @else {
+          <div class="date-list">
+            <button
+              type="button"
+              class="date-chip"
+              [class.date-chip--active]="selectedDate() === ''"
+              (click)="clearDateFilter()"
+            >
+              <span>All Dates</span>
+              <span class="mono">{{ totalCount() }}</span>
+            </button>
+            @for (summary of dateSummaries(); track summary.date) {
+              <button
+                type="button"
+                class="date-chip"
+                [class.date-chip--active]="selectedDate() === summary.date"
+                (click)="selectDate(summary.date)"
+              >
+                <span class="mono">{{ summary.date }}</span>
+                <span class="mono">{{ summary.count }}</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="panel side-panel">
+        <div class="panel-header side-header">
+          <h2 class="panel-title">Status Distribution</h2>
+        </div>
+
+        <div class="distribution-list">
+          @for (item of statusBreakdown(); track item.status) {
+            <div class="dist-row">
+              <div class="dist-meta">
+                <span class="dist-label">
+                  @switch (item.status) {
+                    @case ('Confirmed') {
+                      <span class="status-dot status-dot--confirmed" aria-hidden="true"></span>
+                    }
+                    @case ('Pending') {
+                      <span class="status-dot status-dot--pending" aria-hidden="true"></span>
+                    }
+                    @case ('Completed') {
+                      <span class="status-dot status-dot--completed" aria-hidden="true"></span>
+                    }
+                    @case ('Cancelled') {
+                      <span class="status-dot status-dot--cancelled" aria-hidden="true"></span>
+                    }
+                  }
+                  {{ item.status }}
+                </span>
+                <span class="mono dist-count">{{ item.count }} ({{ item.percent }}%)</span>
+              </div>
+              <div class="dist-track" aria-hidden="true">
+                <div
+                  class="dist-fill"
+                  [class]="'dist-fill dist-fill--' + item.status.toLowerCase()"
+                  [style.width.%]="item.percent"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="side-footer">
+          <a class="btn btn-secondary full-width" routerLink="/appointments">
+            Open Full Directory
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>

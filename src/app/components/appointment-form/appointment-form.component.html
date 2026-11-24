@@ -1,0 +1,300 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">
+        @if (isEditMode()) {
+          Edit Appointment
+        } @else {
+          New Appointment
+        }
+      </h1>
+      <p class="page-subtitle">
+        @if (isEditMode()) {
+          Update details for record #{{ editId() }}. Time range rules are enforced in real time.
+        } @else {
+          Schedule a new appointment. Form-group cross-field validation verifies that end time is
+          strictly later than start time.
+        }
+      </p>
+    </div>
+
+    <div class="page-actions">
+      <a class="btn btn-secondary" routerLink="/appointments">Back to Appointments</a>
+    </div>
+  </header>
+
+  @if (successMessage(); as message) {
+    <div class="banner banner--success" role="status" aria-live="polite">
+      <div class="banner-body">
+        <span class="banner-title">Appointment persisted to API</span>
+        <span>{{ message }}</span>
+      </div>
+      <div class="banner-actions">
+        <a class="btn btn-secondary btn-sm" routerLink="/appointments">View Appointments</a>
+        <button type="button" class="btn btn-ghost btn-sm" (click)="dismissSuccess()">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="banner banner--error" role="alert">
+      <div class="banner-body">
+        <span class="banner-title">Request failed</span>
+        <span>{{ error }}</span>
+      </div>
+      <div class="banner-actions">
+        @if (isEditMode() && isLoadingRecord() === false) {
+          <button type="button" class="btn btn-danger btn-sm" (click)="retryLoad()">Retry</button>
+        }
+      </div>
+    </div>
+  }
+
+  @if (isLoadingRecord()) {
+    <div class="panel form-card" aria-busy="true" aria-label="Loading appointment record">
+      <div class="skeleton-stack">
+        <span class="skeleton sk-line"></span>
+        <span class="skeleton sk-input"></span>
+        <div class="form-row-2">
+          <span class="skeleton sk-input"></span>
+          <span class="skeleton sk-input"></span>
+        </div>
+        <div class="form-row-3">
+          <span class="skeleton sk-input"></span>
+          <span class="skeleton sk-input"></span>
+          <span class="skeleton sk-input"></span>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <form
+      class="panel form-card"
+      [formGroup]="appointmentForm"
+      (ngSubmit)="onSubmit()"
+      novalidate
+    >
+      <div class="form-section">
+        <h2 class="section-heading">Appointment Details</h2>
+
+        <div class="field">
+          <label class="label" for="appt-title">
+            Appointment Title <span class="required" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="appt-title"
+            type="text"
+            class="control"
+            formControlName="title"
+            placeholder="e.g., Architecture Review or Thesis Consultation"
+            [class.control-error]="isFieldInvalid('title')"
+            [attr.aria-invalid]="isFieldInvalid('title')"
+            [attr.aria-describedby]="isFieldInvalid('title') ? 'err-title' : null"
+          />
+          @if (getFieldError('title'); as err) {
+            <p id="err-title" class="field-error" role="alert">{{ err }}</p>
+          }
+        </div>
+
+        <div class="form-row-2">
+          <div class="field">
+            <label class="label" for="appt-client-name">
+              Client Name <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="appt-client-name"
+              type="text"
+              class="control"
+              formControlName="clientName"
+              placeholder="Full name"
+              [class.control-error]="isFieldInvalid('clientName')"
+              [attr.aria-invalid]="isFieldInvalid('clientName')"
+              [attr.aria-describedby]="isFieldInvalid('clientName') ? 'err-client-name' : null"
+            />
+            @if (getFieldError('clientName'); as err) {
+              <p id="err-client-name" class="field-error" role="alert">{{ err }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="label" for="appt-client-email">
+              Client Email <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="appt-client-email"
+              type="email"
+              class="control"
+              formControlName="clientEmail"
+              placeholder="name@domain.edu"
+              [class.control-error]="isFieldInvalid('clientEmail')"
+              [attr.aria-invalid]="isFieldInvalid('clientEmail')"
+              [attr.aria-describedby]="isFieldInvalid('clientEmail') ? 'err-client-email' : null"
+            />
+            @if (getFieldError('clientEmail'); as err) {
+              <p id="err-client-email" class="field-error" role="alert">{{ err }}</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <fieldset class="form-section time-fieldset">
+        <legend class="section-heading">Schedule &amp; Time Window</legend>
+        <p class="section-hint">
+          Cross-field validation rule: End Time must be strictly later than Start Time.
+        </p>
+
+        <div class="form-row-3">
+          <div class="field">
+            <label class="label" for="appt-date">
+              Date <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="appt-date"
+              type="date"
+              class="control mono"
+              formControlName="date"
+              [class.control-error]="isFieldInvalid('date')"
+              [attr.aria-invalid]="isFieldInvalid('date')"
+              [attr.aria-describedby]="isFieldInvalid('date') ? 'err-date' : null"
+            />
+            @if (getFieldError('date'); as err) {
+              <p id="err-date" class="field-error" role="alert">{{ err }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="label" for="appt-start-time">
+              Start Time <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="appt-start-time"
+              type="time"
+              class="control mono"
+              formControlName="startTime"
+              (blur)="onTimeBlur()"
+              [class.control-error]="isFieldInvalid('startTime') || showTimeRangeError()"
+              [attr.aria-invalid]="isFieldInvalid('startTime') || showTimeRangeError()"
+              [attr.aria-describedby]="
+                showTimeRangeError()
+                  ? 'time-range-error'
+                  : isFieldInvalid('startTime')
+                    ? 'err-start-time'
+                    : null
+              "
+            />
+            @if (getFieldError('startTime'); as err) {
+              <p id="err-start-time" class="field-error" role="alert">{{ err }}</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="label" for="appt-end-time">
+              End Time <span class="required" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="appt-end-time"
+              type="time"
+              class="control mono"
+              formControlName="endTime"
+              (blur)="onTimeBlur()"
+              [class.control-error]="isFieldInvalid('endTime') || showTimeRangeError()"
+              [attr.aria-invalid]="isFieldInvalid('endTime') || showTimeRangeError()"
+              [attr.aria-describedby]="
+                showTimeRangeError()
+                  ? 'time-range-error'
+                  : isFieldInvalid('endTime')
+                    ? 'err-end-time'
+                    : null
+              "
+            />
+            @if (getFieldError('endTime'); as err) {
+              <p id="err-end-time" class="field-error" role="alert">{{ err }}</p>
+            }
+          </div>
+        </div>
+
+        @if (showTimeRangeError() && timeRangeError(); as rangeErr) {
+          <div id="time-range-error" class="cross-field-alert" role="alert">
+            <span class="cross-field-title">Cross-field validation error</span>
+            <span>{{ rangeErr.message }}</span>
+          </div>
+        } @else if (durationLabel(); as duration) {
+          <div class="duration-preview mono">
+            Valid window: {{ appointmentForm.controls.startTime.value }} to
+            {{ appointmentForm.controls.endTime.value }} ({{ duration }})
+          </div>
+        }
+      </fieldset>
+
+      <div class="form-section">
+        <h2 class="section-heading">Status &amp; Notes</h2>
+
+        <div class="form-row-status">
+          <div class="field">
+            <label class="label" for="appt-status">
+              Status <span class="required" aria-hidden="true">*</span>
+            </label>
+            <select id="appt-status" class="control" formControlName="status">
+              @for (status of statuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="label" for="appt-notes">Notes</label>
+            <span class="char-count mono">{{ notesLength() }} / 300</span>
+          </div>
+          <textarea
+            id="appt-notes"
+            rows="3"
+            class="control notes-area"
+            formControlName="notes"
+            placeholder="Optional agenda, preparation notes, or meeting location..."
+            [class.control-error]="isFieldInvalid('notes')"
+            [attr.aria-invalid]="isFieldInvalid('notes')"
+            [attr.aria-describedby]="isFieldInvalid('notes') ? 'err-notes' : null"
+          ></textarea>
+          @if (getFieldError('notes'); as err) {
+            <p id="err-notes" class="field-error" role="alert">{{ err }}</p>
+          }
+        </div>
+      </div>
+
+      <footer class="form-footer">
+        <div class="footer-left">
+          @if (!isEditMode()) {
+            <button
+              type="button"
+              class="btn btn-ghost"
+              [disabled]="isSubmitting()"
+              (click)="resetFormToDefaults()"
+            >
+              Reset Form
+            </button>
+          }
+        </div>
+
+        <div class="footer-right">
+          <a class="btn btn-secondary" routerLink="/appointments">Cancel</a>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="isSubmitting() || showTimeRangeError()"
+          >
+            @if (isSubmitting()) {
+              Saving...
+            } @else if (isEditMode()) {
+              Save Changes
+            } @else {
+              Create Appointment
+            }
+          </button>
+        </div>
+      </footer>
+    </form>
+  }
+</section>

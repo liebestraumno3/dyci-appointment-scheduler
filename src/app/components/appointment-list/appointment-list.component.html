@@ -1,0 +1,264 @@
+<section class="page-shell">
+  <header class="page-header">
+    <div>
+      <h1 class="page-title">Appointments</h1>
+      <p class="page-subtitle">
+        Filter by date via the REST API, search records, update statuses inline, or manage entries.
+      </p>
+    </div>
+
+    <div class="page-actions">
+      <button
+        type="button"
+        class="btn btn-secondary"
+        [disabled]="isLoading()"
+        (click)="loadAppointments()"
+      >
+        Refresh
+      </button>
+      <a class="btn btn-primary" routerLink="/appointments/new">+ New Appointment</a>
+    </div>
+  </header>
+
+  @if (feedbackMessage(); as message) {
+    <div
+      class="banner"
+      [class.banner--success]="feedbackTone() === 'success'"
+      [class.banner--error]="feedbackTone() === 'error'"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="banner-body">
+        <span>{{ message }}</span>
+      </div>
+      <div class="banner-actions">
+        <button type="button" class="btn btn-ghost btn-sm" (click)="dismissFeedback()">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage(); as error) {
+    <div class="banner banner--error" role="alert">
+      <div class="banner-body">
+        <span class="banner-title">Could not retrieve appointments</span>
+        <span>{{ error }}</span>
+      </div>
+      <div class="banner-actions">
+        <button type="button" class="btn btn-danger btn-sm" (click)="loadAppointments()">
+          Retry
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="panel toolbar">
+    <div class="toolbar-field toolbar-field--search">
+      <label class="field-label" for="filter-search">Search</label>
+      <input
+        id="filter-search"
+        type="search"
+        class="control"
+        placeholder="Title, client name, email, or notes..."
+        [(ngModel)]="searchQuery"
+      />
+    </div>
+
+    <div class="toolbar-field toolbar-field--date">
+      <label class="field-label" for="filter-date">Filter by Date (API)</label>
+      <input
+        id="filter-date"
+        type="date"
+        class="control mono"
+        [(ngModel)]="selectedDate"
+        (ngModelChange)="onDateFilterChange()"
+      />
+    </div>
+
+    <div class="toolbar-field toolbar-field--status">
+      <label class="field-label" for="filter-status">Status</label>
+      <select id="filter-status" class="control" [(ngModel)]="selectedStatus">
+        <option value="All">All Statuses</option>
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+    </div>
+
+    @if (hasActiveFilters()) {
+      <div class="toolbar-clear">
+        <button type="button" class="btn btn-secondary" (click)="clearFilters()">
+          Clear Filters
+        </button>
+      </div>
+    }
+  </div>
+
+  <div class="panel table-panel">
+    <div class="table-meta">
+      <span class="tabular">
+        Showing {{ filteredAppointments().length }} of {{ appointments().length }} appointment(s)
+      </span>
+      @if (selectedDate()) {
+        <span class="mono active-query">GET /appointments?date={{ selectedDate() }}</span>
+      }
+    </div>
+
+    @if (isLoading()) {
+      <div class="skeleton-table" aria-busy="true" aria-label="Loading appointments table">
+        @for (row of skeletonRows; track row) {
+          <div class="skeleton-row">
+            <span class="skeleton sk-col-1"></span>
+            <span class="skeleton sk-col-2"></span>
+            <span class="skeleton sk-col-3"></span>
+            <span class="skeleton sk-col-4"></span>
+            <span class="skeleton sk-col-5"></span>
+          </div>
+        }
+      </div>
+    } @else if (filteredAppointments().length === 0) {
+      <div class="empty-state">
+        @if (hasActiveFilters()) {
+          <h2 class="empty-title">No matching appointments</h2>
+          <p class="empty-description">
+            No appointments match your current date, status, or search filter. Reset filters to view
+            all saved records.
+          </p>
+          <button type="button" class="btn btn-secondary" (click)="clearFilters()">
+            Clear All Filters
+          </button>
+        } @else {
+          <h2 class="empty-title">No appointments scheduled</h2>
+          <p class="empty-description">
+            Your schedule database is currently empty. Create an appointment to persist a new record
+            to the API.
+          </p>
+          <a class="btn btn-primary" routerLink="/appointments/new">Create Appointment</a>
+        }
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th scope="col" class="col-schedule">Date &amp; Time</th>
+              <th scope="col" class="col-title">Appointment</th>
+              <th scope="col" class="col-client">Client</th>
+              <th scope="col" class="col-status">Status</th>
+              <th scope="col" class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (appointment of filteredAppointments(); track appointment.id) {
+              <tr>
+                <td class="cell-schedule" data-label="Date &amp; Time">
+                  <div class="mono primary-text">{{ appointment.date }}</div>
+                  <div class="mono secondary-text">
+                    {{ appointment.startTime }} - {{ appointment.endTime }}
+                    @if (getDuration(appointment); as duration) {
+                      <span class="muted-text">({{ duration }})</span>
+                    }
+                  </div>
+                </td>
+
+                <td class="cell-title" data-label="Appointment">
+                  <div class="primary-text clamp-1" [title]="appointment.title">
+                    {{ appointment.title }}
+                  </div>
+                  @if (appointment.notes) {
+                    <div class="secondary-text clamp-1" [title]="appointment.notes">
+                      {{ appointment.notes }}
+                    </div>
+                  }
+                </td>
+
+                <td class="cell-client" data-label="Client">
+                  <div class="primary-text clamp-1">{{ appointment.clientName }}</div>
+                  <div class="secondary-text clamp-1">{{ appointment.clientEmail }}</div>
+                </td>
+
+                <td class="cell-status" data-label="Status">
+                  <div class="status-cell">
+                    @switch (appointment.status) {
+                      @case ('Confirmed') {
+                        <span class="status-dot status-dot--confirmed" aria-hidden="true"></span>
+                      }
+                      @case ('Pending') {
+                        <span class="status-dot status-dot--pending" aria-hidden="true"></span>
+                      }
+                      @case ('Completed') {
+                        <span class="status-dot status-dot--completed" aria-hidden="true"></span>
+                      }
+                      @case ('Cancelled') {
+                        <span class="status-dot status-dot--cancelled" aria-hidden="true"></span>
+                      }
+                    }
+                    <label class="sr-only" [for]="'list-status-' + appointment.id">
+                      Status for {{ appointment.title }}
+                    </label>
+                    <select
+                      [id]="'list-status-' + appointment.id"
+                      class="control status-select"
+                      [value]="appointment.status"
+                      [disabled]="updatingId() === appointment.id || deletingId() === appointment.id"
+                      (change)="onStatusChange(appointment, $event)"
+                    >
+                      @for (status of statuses; track status) {
+                        <option [value]="status">{{ status }}</option>
+                      }
+                    </select>
+                  </div>
+                </td>
+
+                <td class="cell-actions" data-label="Actions">
+                  @if (pendingDeleteId() === appointment.id) {
+                    <div class="row-actions">
+                      <button
+                        type="button"
+                        class="btn btn-danger btn-sm"
+                        [disabled]="deletingId() === appointment.id"
+                        (click)="confirmDelete(appointment)"
+                      >
+                        @if (deletingId() === appointment.id) {
+                          Deleting...
+                        } @else {
+                          Confirm
+                        }
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm"
+                        [disabled]="deletingId() === appointment.id"
+                        (click)="cancelDelete()"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  } @else {
+                    <div class="row-actions">
+                      <a
+                        class="btn btn-secondary btn-sm"
+                        [routerLink]="['/appointments', appointment.id, 'edit']"
+                      >
+                        Edit
+                      </a>
+                      <button
+                        type="button"
+                        class="btn btn-ghost btn-sm delete-trigger"
+                        [disabled]="updatingId() === appointment.id"
+                        (click)="requestDelete(appointment.id)"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</section>

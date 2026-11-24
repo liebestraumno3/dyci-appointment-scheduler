@@ -1,0 +1,60 @@
+{
+  "appointments": [
+    {
+      "id": "1",
+      "title": "Capstone System Architecture Review",
+      "clientName": "Elena Navarro",
+      "clientEmail": "elena.navarro@university.edu",
+      "date": "2026-11-24",
+      "startTime": "09:00",
+      "endTime": "10:00",
+      "status": "Completed",
+      "notes": "Finalized standalone Angular 22 component boundaries and REST API contract."
+    },
+    {
+      "id": "2",
+      "title": "Database Schema and Persistence Check",
+      "clientName": "Marcus Reyes",
+      "clientEmail": "marcus.reyes@university.edu",
+      "date": "2026-11-24",
+      "startTime": "13:30",
+      "endTime": "14:45",
+      "status": "Confirmed",
+      "notes": "Verify json-server write persistence and PATCH status payload structure."
+    },
+    {
+      "id": "3",
+      "title": "Reactive Forms Validation Consultation",
+      "clientName": "Priya Santos",
+      "clientEmail": "priya.santos@university.edu",
+      "date": "2026-11-25",
+      "startTime": "10:15",
+      "endTime": "11:00",
+      "status": "Pending",
+      "notes": "Review form-group cross-field validation error messaging and edge cases."
+    },
+    {
+      "id": "4",
+      "title": "UI Accessibility and Contrast Audit",
+      "clientName": "Daniel Lim",
+      "clientEmail": "daniel.lim@university.edu",
+      "date": "2026-11-25",
+      "startTime": "15:00",
+      "endTime": "16:30",
+      "status": "Confirmed",
+      "notes": "Audit keyboard focus rings, ARIA labels, and WCAG AA contrast ratios."
+    },
+    {
+      "id": "5",
+      "title": "Initial Prototype Dry Run",
+      "clientName": "Claire Mendoza",
+      "clientEmail": "claire.mendoza@university.edu",
+      "date": "2026-11-26",
+      "startTime": "11:00",
+      "endTime": "12:00",
+      "status": "Cancelled",
+      "notes": "Rescheduled following final defense presentation slot adjustment."
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

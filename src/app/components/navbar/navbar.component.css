@@ -1,0 +1,165 @@
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 8px;
+  z-index: 100;
+  padding: 8px 12px;
+  background-color: var(--accent-solid);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.skip-link:focus {
+  left: 12px;
+}
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background-color: var(--bg-canvas);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.navbar-inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  height: 52px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  min-width: 0;
+}
+
+.brand-mark {
+  flex-shrink: 0;
+  color: var(--text-primary);
+}
+
+.brand-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-divider {
+  color: var(--border-strong);
+  font-size: 13px;
+}
+
+.brand-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-link {
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition:
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-subtle);
+}
+
+.nav-link--active {
+  color: var(--text-primary);
+  background-color: var(--bg-subtle);
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-toggle {
+  display: none;
+}
+
+.mobile-nav {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .navbar-inner {
+    padding: 0 14px;
+  }
+
+  .brand-divider,
+  .brand-meta,
+  .desktop-nav,
+  .desktop-cta {
+    display: none;
+  }
+
+  .mobile-toggle {
+    display: inline-flex;
+    min-height: 36px;
+  }
+
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px 16px;
+    border-top: 1px solid var(--border-subtle);
+    background-color: var(--bg-surface);
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .mobile-nav-link--active {
+    background-color: var(--bg-subtle);
+    color: var(--text-primary);
+  }
+
+  .mobile-nav-cta {
+    margin-top: 4px;
+    width: 100%;
+  }
+}
